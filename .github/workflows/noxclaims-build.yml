@@ -30,7 +30,7 @@ jobs:
         working-directory: NoxWoodsClaims
         run: |
           set -o pipefail
-          gradle --no-daemon clean build smokeCore smokeProtection smokeAccess smokeEconomy smokeTransfer 2>&1 | tee ../noxclaims-build.log
+          gradle --no-daemon clean jar smokeCore smokeProtection smokeAccess smokeEconomy smokeTransfer 2>&1 | tee ../noxclaims-build.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
