@@ -5,6 +5,8 @@ on:
     paths:
       - noxwoodsclaims-build-source.b64
       - .github/workflows/noxclaims-build.yml
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
