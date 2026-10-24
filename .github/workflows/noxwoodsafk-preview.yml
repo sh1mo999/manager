@@ -1,5 +1,7 @@
 name: NoxWoodsAFK preview Java25 build
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [codex/noxwoodsafk-preview-build]
     paths:
