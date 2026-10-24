@@ -1,0 +1,43 @@
+name: NoxWoodsAFK preview Java25 build
+on:
+  push:
+    branches: [codex/noxwoodsafk-preview-build]
+    paths:
+      - 'afk-source-part*.b64'
+      - '.github/workflows/noxwoodsafk-preview.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - name: Reconstruct source archive
+        run: |
+          set -euo pipefail
+          cat afk-source-part*.b64 | base64 -d | tar -xJ
+          test -f NoxWoodsAFK-0.1.0/src/main/resources/plugin.yml
+      - name: Compile with Paper API and run pure policy tests
+        working-directory: NoxWoodsAFK-0.1.0
+        run: |
+          set -o pipefail
+          gradle --no-daemon clean jar smokePolicy 2>&1 | tee ../afk-build.log
+      - name: Confirm compiled plugin metadata
+        run: |
+          test -f NoxWoodsAFK-0.1.0/build/libs/NoxWoodsAFK-0.1.0-preview.jar
+          unzip -p NoxWoodsAFK-0.1.0/build/libs/NoxWoodsAFK-0.1.0-preview.jar plugin.yml | grep 'version: 0.1.0-preview'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: NoxWoodsAFK-preview-build
+          path: |
+            afk-build.log
+            NoxWoodsAFK-0.1.0/build/libs/*.jar
+          if-no-files-found: warn
