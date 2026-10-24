@@ -1,0 +1,47 @@
+name: NoxWoodsTeleport 1.1 Java25 verification
+on:
+  push:
+    branches: [codex/noxwoodsteleport-build]
+    paths:
+      - 'nwtp-v11-source-part*.b64'
+      - '.github/workflows/nwtp-11-build.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'nwtp-v11-source-part*.b64'
+      - '.github/workflows/nwtp-11-build.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - name: Extract and verify source archive
+        run: |
+          cat nwtp-v11-source-part*.b64 | base64 -d | tar -xJ
+          test -f NoxWoodsTeleport-1.1.0/src/main/resources/plugin.yml
+      - name: Compile and run teleport logic smoke tests
+        working-directory: NoxWoodsTeleport-1.1.0
+        run: |
+          set -o pipefail
+          gradle --no-daemon clean jar smokePolicy smokeCharges 2>&1 | tee ../nwtp-v11-build.log
+      - name: Verify plugin jar manifest
+        run: |
+          test -f NoxWoodsTeleport-1.1.0/build/libs/NoxWoodsTeleport-1.1.0-rc1.jar
+          unzip -p NoxWoodsTeleport-1.1.0/build/libs/NoxWoodsTeleport-1.1.0-rc1.jar plugin.yml | grep 'version: 1.1.0-rc1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: NoxWoodsTeleport-1.1.0-verified
+          path: |
+            nwtp-v11-build.log
+            NoxWoodsTeleport-1.1.0/build/libs/*.jar
+          if-no-files-found: warn
